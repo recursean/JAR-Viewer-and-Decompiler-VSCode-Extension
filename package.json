@@ -51,6 +51,10 @@
       {
         "command": "jar-viewer-and-decompiler.viewJarContents",
         "title": "Open With JAR Viewer and Decompiler"
+      },
+      {
+        "command": "jar-viewer-and-decompiler.openFile",
+        "title": "Open File in JAR"
       }
     ]
   },
