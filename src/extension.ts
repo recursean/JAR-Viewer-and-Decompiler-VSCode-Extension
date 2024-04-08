@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import * as JSZip from 'jszip';
+import * as cp from 'child_process';
 
 /**
  * 
@@ -91,7 +92,7 @@ async function openFile(filePath: string, jarFile: JSZip, jarFileName: string) {
 				const cfrPath = vscode.workspace.getConfiguration().get<string>('jar-viewer-and-decompiler.cfrPath');
 				
 				// Construct the Java command
-				// const command = `java -jar ${cfrPath} ${classFilePath}`;
+				// const command = `echo '${fileContents}' > tmp.class; java -jar ${cfrPath} tmp.class`;
 			
 				// cp.exec(command, (error, stdout, stderr) => {
 				// 	if (error) {
@@ -103,9 +104,9 @@ async function openFile(filePath: string, jarFile: JSZip, jarFileName: string) {
 				// 	console.log(`Decompiled code: ${stdout}`);
 			
 				// 	// Optionally, show the decompiled code in a new VS Code editor tab
-				// 	vscode.workspace.openTextDocument({ content: stdout, language: 'java' }).then(doc => {
-				// 		vscode.window.showTextDocument(doc);
-				// 	});
+				// 	// vscode.workspace.openTextDocument({ content: stdout, language: 'java' }).then(doc => {
+				// 	// 	vscode.window.showTextDocument(doc);
+				// 	// });
 				// });
 			}
 			else {
