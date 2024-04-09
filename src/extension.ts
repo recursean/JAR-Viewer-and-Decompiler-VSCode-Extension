@@ -78,12 +78,12 @@ function viewJarContents(uri: vscode.Uri) {
  * @param jarFile JSZip object containing selected jar file contents
  * @param jarFileName name of jar file
  */
-async function openFile(filePath: string, jarFile: JSZip, jarFileName: string) {
+async function openFile(filePath: string, jarFile: JSZip, jarFileName: string, jarFilePath: string) {
 	try {
 		var file = jarFile.file(filePath);
 		if(file) {
-			// read contents of selected file
-			fileContents = await file.async("string");
+			// used for opening file in editor
+			const uri = vscode.Uri.parse(`${scheme}:///${jarFileName}/${filePath}`);
 
 			var parts = filePath.split(".");
 			// was a java class file selected?
@@ -91,27 +91,31 @@ async function openFile(filePath: string, jarFile: JSZip, jarFileName: string) {
 				// Retrieve the path to the CFR JAR file from the extension settings
 				const cfrPath = vscode.workspace.getConfiguration().get<string>('jar-viewer-and-decompiler.cfrPath');
 				
-				// Construct the Java command
-				// const command = `echo '${fileContents}' > tmp.class; java -jar ${cfrPath} tmp.class`;
+				// run CFR to decompile selected class file
+				const command = `java -jar ${cfrPath} --extraclasspath ${jarFilePath} ${filePath}`;
+				cp.exec(command, async (error, stdout, stderr) => {
+					if (error) {
+						console.error(`CFR error: ${error}`);
+						return vscode.window.showErrorMessage('Decompilation error: ' + error.message);
+					}
+
+					if(stderr.length > 0) {
+						console.error(`CFR error: ${stderr}`);
+					}
+
+					// set file contents to output of cfr
+					fileContents = stdout;
 			
-				// cp.exec(command, (error, stdout, stderr) => {
-				// 	if (error) {
-				// 		console.error(`exec error: ${error}`);
-				// 		return vscode.window.showErrorMessage('Decompilation error: ' + error.message);
-				// 	}
-			
-				// 	// Handle the decompiled Java code in `stdout`
-				// 	console.log(`Decompiled code: ${stdout}`);
-			
-				// 	// Optionally, show the decompiled code in a new VS Code editor tab
-				// 	// vscode.workspace.openTextDocument({ content: stdout, language: 'java' }).then(doc => {
-				// 	// 	vscode.window.showTextDocument(doc);
-				// 	// });
-				// });
+					// show contents of file in editor viewer
+					const doc = await vscode.workspace.openTextDocument(uri); 
+					await vscode.window.showTextDocument(doc, { preview: true });
+				});
 			}
 			else {
+				// read contents of selected file
+				fileContents = await file.async("string");
+		
 				// show contents of file in editor viewer
-				const uri = vscode.Uri.parse(`${scheme}:///${jarFileName}/${filePath}`);
 				const doc = await vscode.workspace.openTextDocument(uri); 
 				await vscode.window.showTextDocument(doc, { preview: true });
 			}
@@ -215,6 +219,7 @@ class JarContentProvider implements vscode.TreeDataProvider<JarEntry> {
 			// create local vars for sharing in arguments to openFile
 			var jarFilelocal = this.jarFile;
 			var jarFileNameLocal = this.jarFileName;
+			var jarFilePathLocal = this.jarFilePath;
 
 			// create an entry for each child of selected directory
 			n.children.forEach(function (child) {
@@ -236,7 +241,7 @@ class JarContentProvider implements vscode.TreeDataProvider<JarEntry> {
 						{
 							command: 'jar-viewer-and-decompiler.openFile', 
 							title: "Open File",
-							arguments: [child.filePath, jarFilelocal, jarFileNameLocal] 
+							arguments: [child.filePath, jarFilelocal, jarFileNameLocal, jarFilePathLocal] 
 						}
 					);
 					entries.push(entry);
