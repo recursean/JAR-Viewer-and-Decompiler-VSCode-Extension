@@ -6,7 +6,7 @@ This extension allows you to browse the contents of Java JAR files. To launch th
 
 Any Java class files in the JARs can be decompiled. Decompiling class files requires CFR to be available. Do NOT use this extension to decompile class files which you do not have legal rights to do so.
 
-\!\[Extension preview\]\(media/preview.gif\)
+![Extension preview](media/preview.gif)
 
 ## Requirements
 
