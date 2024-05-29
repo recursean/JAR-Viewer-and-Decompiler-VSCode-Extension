@@ -9,11 +9,10 @@ Java class files in the JARs can be decompiled. Decompiling class files requires
 ![Extension preview](https://raw.githubusercontent.com/recursean/JAR-Viewer-and-Decompiler-VSCode-Extension/main/media/preview.gif)
 
 ## Requirements
-
-To view the decompiled contents of Java class files within JARs, the CFR decompiler JAR file needs to be downloaded and the path provided to the `cfrPath` setting. CFR can be downloaded [here](https://www.benf.org/other/cfr/).
+-  VSCode version 1.88.0 or newer.
+- To view the decompiled contents of Java class files within JARs, the CFR decompiler JAR file needs to be downloaded and the path provided to the `cfrPath` setting. CFR can be downloaded [here](https://www.benf.org/other/cfr/).
 
 ## Extension Settings
-
 This extension contributes the following settings:
 
 * `jar-viewer-and-decompiler.cfrPath`: Path to the CFR decompiler JAR file. This is required for decompiling class files.
@@ -27,5 +26,9 @@ This extension contributes the following settings:
 ### 1.0.0
 
 Initial release of extension.
+
+### 1.0.1
+
+Minor bug fixes.
 
 ---
