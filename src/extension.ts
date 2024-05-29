@@ -2,6 +2,8 @@ import * as vscode from 'vscode';
 import * as JSZip from 'jszip';
 import * as cp from 'child_process';
 
+const os = require('os');
+
 /**
  * 
  *  SECTION: global vars
@@ -13,6 +15,8 @@ const scheme = 'jar-viewer-and-decompiler';
 
 // global var used to share contents of file with editor view
 var fileContents = "";
+
+var debug = false;
 
 /**
  * 
@@ -108,6 +112,10 @@ async function openFile(filePath: string, jarFile: JSZip, jarFileName: string, j
 			
 					// show contents of file in editor viewer
 					const doc = await vscode.workspace.openTextDocument(uri); 
+					
+					// set syntax highlighting
+    				await vscode.languages.setTextDocumentLanguage(doc, 'java');
+
 					await vscode.window.showTextDocument(doc, { preview: true });
 				});
 			}
@@ -149,8 +157,21 @@ class JarContentProvider implements vscode.TreeDataProvider<JarEntry> {
 		// Save file path
 		this.jarFilePath = uri.fsPath;
 
-		// Parse jar file name
+		if(debug) {
+			console.log("Processing JAR file: " + this.jarFilePath);
+		}
+
+		// replace forward slashes and back slashes on Windows
+		if(os.platform() === 'win32') {
+			this.jarFilePath = this.jarFilePath.replace(/\\/g, '/');
+
+			if(debug) {
+				console.log("New Windows JAR path: " + this.jarFilePath);
+			}
+		}
+
 		var parts = this.jarFilePath.split("/");
+
 		if(parts.length > 0) {
 			this.jarFileName = parts[parts.length - 1];
 		}
@@ -168,7 +189,7 @@ class JarContentProvider implements vscode.TreeDataProvider<JarEntry> {
     getChildren(element?: JarEntry): Thenable<JarEntry[]> {
         if (element) {
             // If we have an element, return its children
-            return Promise.resolve(this.getEntries(element.label));
+            return Promise.resolve(this.getEntries(element));
         } else {
             // If no element is provided, return the root level entries
             return Promise.resolve(this.getRootEntries());
@@ -200,7 +221,7 @@ class JarContentProvider implements vscode.TreeDataProvider<JarEntry> {
 	 * @param path path to directory that was selected
 	 * @returns 
 	 */
-    private getEntries(path: string): JarEntry[] {
+    private getEntries(selectedEntry: JarEntry): JarEntry[] {
 		// entries that will be returned
 		var entries: JarEntry[] = [];
 		
@@ -208,19 +229,28 @@ class JarContentProvider implements vscode.TreeDataProvider<JarEntry> {
 		var n: GraphNode | undefined;
 
 		// Determine if we are operating on root of jar
-		if(path === this.jarFileName) {
+		if(selectedEntry.label === this.jarFileName) {
 			n = this.jarMap.get(this.jarFilePath);
 		}
 		else {
-			n = this.jarMap.get(path + "/");
+			n = this.jarMap.get(selectedEntry.path);
+			
+			if(debug) {
+				console.log('Getting entries for: ' + selectedEntry.path);
+			}
 		}
 		
+
 		if(n) {
+			if(debug) {
+				console.log('Processing entries for dir: ' + n.filePath + " name: " + n.fileName);
+			}
+
 			// create local vars for sharing in arguments to openFile
 			var jarFilelocal = this.jarFile;
 			var jarFileNameLocal = this.jarFileName;
 			var jarFilePathLocal = this.jarFilePath;
-
+			
 			// create an entry for each child of selected directory
 			n.children.forEach(function (child) {
 				// create collapsable entry for directories
@@ -295,13 +325,27 @@ class JarContentProvider implements vscode.TreeDataProvider<JarEntry> {
 				}
 				else {
 					// get parent node and add current node as a child
-					var parent = parts.splice(0, parts.length - 1).join("/") + "/";
+					if(zipEntry.dir) {
+						var parent = parts.splice(0, parts.length - 2).join("/") + "/";
+					}
+					else {
+						var parent = parts.splice(0, parts.length - 1).join("/") + "/";
+					}
 					var parentNode = this.jarMap.get(parent);
+					if(debug) {
+						console.log('Adding to parent: ' + parent + " child: " + zipEntry.name);
+					}
 					if(parentNode) {
 						parentNode.children.push(n);
 					}
 				}
 			});
+
+			if(debug) {
+				this.jarMap.forEach((val: GraphNode, key: string) => {
+					console.log(`Key: ${key} Value- name: ${val.fileName} path: ${val.filePath}`);
+				});
+			}
 		} catch (error) {
 			console.error(`Failed to parse JAR file: ${error}`);
 			vscode.window.showErrorMessage(`Failed to parse JAR file: ${error}`);
@@ -363,6 +407,10 @@ class GraphNode {
 			else {
 				this.fileName = parts[parts.length - 1];
 			}
+		}
+
+		if(debug) {
+			console.log("New GraphNode dir: " + this.filePath + " name: " + this.fileName);
 		}
 	}
 }

@@ -2,7 +2,7 @@
   "name": "jar-viewer-and-decompiler",
   "displayName": "JAR Viewer and Decompiler",
   "description": "Browse and display decompiled contents of Java JAR files.",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "repository": {
     "type": "git",
     "url": "git@github.com:recursean/JAR-Viewer-and-Decompiler-VSCode-Extension.git"
@@ -11,6 +11,7 @@
   "engines": {
     "vscode": "^1.88.0"
   },
+  "icon": "media/jar-icon.png",
   "categories": [
     "Other"
   ],
@@ -40,7 +41,7 @@
         {
           "id": "jarViewer",
           "title": "JAR Viewer and Decompiler",
-          "icon": "media/jar-icon.svg"
+          "icon": "media/jar-icon.png"
         }
       ]
     },
