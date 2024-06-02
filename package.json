@@ -41,7 +41,7 @@
         {
           "id": "jarViewer",
           "title": "JAR Viewer and Decompiler",
-          "icon": "media/jar-icon.png"
+          "icon": "media/jar-icon.svg"
         }
       ]
     },
