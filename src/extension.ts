@@ -142,8 +142,6 @@ async function openFile(filePath: string, jarFile: JSZip, jarFileName: string, j
  * @param jarEntry selected class file from jar viewer
  */
 async function printSignatures(jarEntry: JarEntry) {
-	vscode.window.showInformationMessage(`Right-click action on file: ${jarEntry.command?.arguments![0]}`);
-
 	// arguments come from selected JarEntry entry
 	var jarFilePath = jarEntry.command?.arguments![3];
 
