@@ -31,4 +31,8 @@ Initial release of extension.
 
 Minor bug fixes.
 
+### 1.1.0
+
+Print type signatures for class files in JAR.
+
 ---
