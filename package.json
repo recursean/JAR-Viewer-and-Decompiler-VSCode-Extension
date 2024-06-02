@@ -2,7 +2,7 @@
   "name": "jar-viewer-and-decompiler",
   "displayName": "JAR Viewer and Decompiler",
   "description": "Browse and display decompiled contents of Java JAR files.",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "repository": {
     "type": "git",
     "url": "git@github.com:recursean/JAR-Viewer-and-Decompiler-VSCode-Extension.git"
@@ -25,6 +25,13 @@
           "command": "jar-viewer-and-decompiler.viewJarContents",
           "group": "navigation"
         }
+      ],
+      "view/item/context": [
+        {
+          "command": "jar-viewer-and-decompiler.printSignatures",
+          "when": "view == jarContents && viewItem == classfile",
+          "group": "navigation"
+        }
       ]
     },
     "configuration": {
@@ -41,7 +48,7 @@
         {
           "id": "jarViewer",
           "title": "JAR Viewer and Decompiler",
-          "icon": "media/jar-icon.png"
+          "icon": "media/jar-icon.svg"
         }
       ]
     },
@@ -61,6 +68,10 @@
       {
         "command": "jar-viewer-and-decompiler.openFile",
         "title": "Open File in JAR"
+      },
+      {
+        "command": "jar-viewer-and-decompiler.printSignatures",
+        "title": "Print internal type signatures"
       }
     ]
   },

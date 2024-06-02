@@ -35,6 +35,7 @@ export function activate(context: vscode.ExtensionContext) {
 	// The commandId parameter must match the command field in package.json
 	context.subscriptions.push(vscode.commands.registerCommand('jar-viewer-and-decompiler.viewJarContents', viewJarContents));
 	context.subscriptions.push(vscode.commands.registerCommand('jar-viewer-and-decompiler.openFile', openFile));
+	context.subscriptions.push(vscode.commands.registerCommand('jar-viewer-and-decompiler.printSignatures', printSignatures));
 
 	// Prepare and register document provider for opening files 
 	// in editor.
@@ -133,6 +134,45 @@ async function openFile(filePath: string, jarFile: JSZip, jarFileName: string, j
 	}
 }
 
+/**
+ * Called when a user right clicks on a class file in jar viewer.
+ * This invokes the javap -s command to get the signatures and
+ * opens the output in the editor view.
+ * 
+ * @param jarEntry selected class file from jar viewer
+ */
+async function printSignatures(jarEntry: JarEntry) {
+	// arguments come from selected JarEntry entry
+	var jarFilePath = jarEntry.command?.arguments![3];
+
+	// javap requires .class extension be removed 
+	var classFileName = jarEntry.command?.arguments![0];
+	classFileName = classFileName.substring(0, classFileName.length - 6);
+
+	// run javap to print type signatures for selected class file
+	const command = `javap -s -cp ${jarFilePath} ${classFileName}`;
+	cp.exec(command, async (error, stdout, stderr) => {
+		if (error) {
+			console.error(`javap error: ${error}`);
+			return vscode.window.showErrorMessage('Type signature error: ' + error.message);
+		}
+
+		if(stderr.length > 0) {
+			console.error(`javap error: ${stderr}`);
+		}
+
+		// set file contents to output of cfr
+		fileContents = stdout;
+
+		// used for opening file in editor
+		const uri = vscode.Uri.parse(`${scheme}:///signatures/${jarEntry.command?.arguments![0]}`);
+
+		// show contents of file in editor viewer
+		const doc = await vscode.workspace.openTextDocument(uri); 
+
+		await vscode.window.showTextDocument(doc, { preview: true });
+	});
+}
 /**
  * 
  *  SECTION: Classes
@@ -274,6 +314,11 @@ class JarContentProvider implements vscode.TreeDataProvider<JarEntry> {
 							arguments: [child.filePath, jarFilelocal, jarFileNameLocal, jarFilePathLocal] 
 						}
 					);
+					// determine if this is a class file
+					var parts = child.fileName.split('.');
+					if(parts[parts.length - 1] === "class") {
+						entry.contextValue = "classfile";
+					}
 					entries.push(entry);
 				}
 			});

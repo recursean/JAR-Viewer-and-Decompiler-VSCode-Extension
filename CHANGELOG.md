@@ -14,3 +14,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Fixed
 - Nested directories in JAR did not correctly display 
 - JAR file root name incorrectly included full path on Windows
+
+## [1.1.0] - 2024-06-02
+
+### Added
+- Print internal type signatures for class files in JAR via right click

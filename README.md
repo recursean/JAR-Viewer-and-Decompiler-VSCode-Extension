@@ -8,9 +8,13 @@ Java class files in the JARs can be decompiled. Decompiling class files requires
 
 ![Extension preview](https://raw.githubusercontent.com/recursean/JAR-Viewer-and-Decompiler-VSCode-Extension/main/media/preview.gif)
 
+Additional Features
+- Display internal type signatures via right click on .class files within JAR
+
 ## Requirements
--  VSCode version 1.88.0 or newer.
+- VSCode version 1.88.0 or newer.
 - To view the decompiled contents of Java class files within JARs, the CFR decompiler JAR file needs to be downloaded and the path provided to the `cfrPath` setting. CFR can be downloaded [here](https://www.benf.org/other/cfr/).
+- To view the decompiled contents of Java class files and print type signatures, Java must be on your PATH.
 
 ## Extension Settings
 This extension contributes the following settings:
@@ -30,5 +34,9 @@ Initial release of extension.
 ### 1.0.1
 
 Minor bug fixes.
+
+### 1.1.0
+
+Print type signatures for class files in JAR.
 
 ---
