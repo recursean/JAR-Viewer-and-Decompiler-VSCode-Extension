@@ -27,16 +27,22 @@ This extension contributes the following settings:
 
 ## Release Notes
 
-### 1.0.0
+### 1.2.0
 
-Initial release of extension.
+Add search and filter.
+
+
+### 1.1.0
+
+Print type signatures for class files in JAR.
 
 ### 1.0.1
 
 Minor bug fixes.
 
-### 1.1.0
+### 1.0.0
 
-Print type signatures for class files in JAR.
+Initial release of extension.
+
 
 ---
