@@ -6,7 +6,7 @@ const os = require('os');
 
 /**
  * 
- *  SECTION: global vars
+ *  MARK: global vars
  * 
  */
 
@@ -20,7 +20,7 @@ var debug = false;
 
 /**
  * 
- *  SECTION: Extension activation and deactivation
+ *  MARK: Extension activation and deactivation
  * 
  */
 
@@ -50,7 +50,7 @@ export function deactivate() {}
 
 /**
  * 
- *  SECTION: Extension commands registered in activate()
+ *  MARK: Extension commands registered in activate()
  * 
  */
 
@@ -175,7 +175,7 @@ async function printSignatures(jarEntry: JarEntry) {
 }
 /**
  * 
- *  SECTION: Classes
+ *  MARK: Classes
  * 
  */
 
