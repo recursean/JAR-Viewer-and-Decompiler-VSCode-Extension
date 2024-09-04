@@ -56,7 +56,11 @@
       "jarViewer": [
         {
           "id": "jarContents",
-          "name": "JAR Contents"
+          "name": "Explorer"
+        },
+        {
+          "id": "jarSearch",
+          "name": "Search"
         }
       ]
     },

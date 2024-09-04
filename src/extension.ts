@@ -73,6 +73,8 @@ function viewJarContents(uri: vscode.Uri) {
 	// build content to display in extension view 
 	const jarContentProvider = new JarContentProvider(uri);
     vscode.window.registerTreeDataProvider('jarContents', jarContentProvider);
+	const jarFilterProvider = new JarFilterProvider(jarContentProvider);
+    vscode.window.registerTreeDataProvider('jarSearch', jarFilterProvider);
 }
 
 /**
@@ -396,6 +398,43 @@ class JarContentProvider implements vscode.TreeDataProvider<JarEntry> {
 			vscode.window.showErrorMessage(`Failed to parse JAR file: ${error}`);
 		}
 	}
+}
+
+class JarFilterProvider implements vscode.TreeDataProvider<JarEntry> {
+    private _onDidChangeTreeData: vscode.EventEmitter<JarEntry | undefined | null | void> = new vscode.EventEmitter<JarEntry | undefined | null | void>();
+    readonly onDidChangeTreeData: vscode.Event<JarEntry | undefined | null | void> = this._onDidChangeTreeData.event;
+
+    private jarContentProvider: JarContentProvider;
+
+    constructor(jarContentProvider: JarContentProvider) {
+        this.jarContentProvider = jarContentProvider;
+    }
+
+    refresh(): void {
+        this._onDidChangeTreeData.fire();
+    }
+
+    getTreeItem(element: JarEntry): vscode.TreeItem {
+        return element;
+		// return {
+        //     label: element.path,
+        //     collapsibleState: vscode.TreeItemCollapsibleState.Collapsed
+        // };
+    }
+
+    getChildren(element?: JarEntry): Thenable<JarEntry[]> {
+        if (element) {
+            return Promise.resolve([]);
+        } else {
+            return Promise.resolve([]);
+        }
+    }
+
+    // filterPackages(searchQuery: string) {
+    //     const filteredEntries = this.jarEntries.filter(entry => entry.packageName.includes(searchQuery));
+    //     this.jarEntries = filteredEntries;
+    //     this.refresh();
+    // }
 }
 
 /**
