@@ -195,9 +195,14 @@ class JarContentProvider implements vscode.TreeDataProvider<JarEntry> {
 
 	jarMap: Map<string, GraphNode>;
 
+	packages: GraphNode[];
+
     constructor(private uri: vscode.Uri) {
 		// Save file path
 		this.jarFilePath = uri.fsPath;
+		
+		// init
+		this.packages = [];
 
 		if(debug) {
 			console.log("Processing JAR file: " + this.jarFilePath);
@@ -231,7 +236,7 @@ class JarContentProvider implements vscode.TreeDataProvider<JarEntry> {
     getChildren(element?: JarEntry): Thenable<JarEntry[]> {
         if (element) {
             // If we have an element, return its children
-            return Promise.resolve(this.getEntries(element));
+            return Promise.resolve(this.getEntries(element, false));
         } else {
             // If no element is provided, return the root level entries
             return Promise.resolve(this.getRootEntries());
@@ -246,7 +251,7 @@ class JarContentProvider implements vscode.TreeDataProvider<JarEntry> {
 	 * 
 	 * @returns JarEntry with JAR file name as label
 	 */
-    private getRootEntries(): JarEntry[] {
+    getRootEntries(): JarEntry[] {
 		// Root entry will always be the name of jar file
     	return [new JarEntry(
 			this.jarFileName, // Label to display
@@ -263,7 +268,7 @@ class JarContentProvider implements vscode.TreeDataProvider<JarEntry> {
 	 * @param path path to directory that was selected
 	 * @returns 
 	 */
-    private getEntries(selectedEntry: JarEntry): JarEntry[] {
+    getEntries(selectedEntry: JarEntry, fromSearch: boolean): JarEntry[] {
 		// entries that will be returned
 		var entries: JarEntry[] = [];
 		
@@ -296,7 +301,7 @@ class JarContentProvider implements vscode.TreeDataProvider<JarEntry> {
 			// create an entry for each child of selected directory
 			n.children.forEach(function (child) {
 				// create collapsable entry for directories
-				if(child.dir) {
+				if(child.isDir && !fromSearch) {
 					const entry = new JarEntry(
 						child.fileName, 
 						child.filePath,
@@ -317,9 +322,12 @@ class JarContentProvider implements vscode.TreeDataProvider<JarEntry> {
 						}
 					);
 					// determine if this is a class file
-					var parts = child.fileName.split('.');
-					if(parts[parts.length - 1] === "class") {
+					if(child.isClassFile) {
 						entry.contextValue = "classfile";
+					}
+					// skip adding entry if coming from search and not a class file
+					else if(fromSearch) {
+						return;
 					}
 					entries.push(entry);
 				}
@@ -329,6 +337,22 @@ class JarContentProvider implements vscode.TreeDataProvider<JarEntry> {
 
 		return entries;
     }
+	
+	getRootPackageEntries(): JarEntry[] {
+		// entries that will be returned
+		var entries: JarEntry[] = [];
+
+		this.packages.forEach(function (child) {
+			const entry = new JarEntry(
+				child.filePath.replaceAll("/",".").substring(0, child.filePath.length-1), 
+				child.filePath,
+				vscode.TreeItemCollapsibleState.Collapsed 
+			);
+			entries.push(entry);
+		});
+
+		return entries;
+	}
 
     refresh(): void {
         this._onDidChangeTreeData.fire(null);
@@ -384,6 +408,12 @@ class JarContentProvider implements vscode.TreeDataProvider<JarEntry> {
 					}
 					if(parentNode) {
 						parentNode.children.push(n);
+
+						// if class file, mark parent node as Java package
+						if(n.isClassFile && !parentNode.isPackage) {
+							parentNode.isPackage = true;
+							this.packages.push(parentNode);
+						}
 					}
 				}
 			});
@@ -393,6 +423,10 @@ class JarContentProvider implements vscode.TreeDataProvider<JarEntry> {
 					console.log(`Key: ${key} Value- name: ${val.fileName} path: ${val.filePath}`);
 				});
 			}
+
+			this.packages.sort((a: GraphNode, b: GraphNode) => {
+				return a.filePath.localeCompare(b.filePath);
+			});
 		} catch (error) {
 			console.error(`Failed to parse JAR file: ${error}`);
 			vscode.window.showErrorMessage(`Failed to parse JAR file: ${error}`);
@@ -408,6 +442,15 @@ class JarFilterProvider implements vscode.TreeDataProvider<JarEntry> {
 
     constructor(jarContentProvider: JarContentProvider) {
         this.jarContentProvider = jarContentProvider;
+
+		vscode.window.showInputBox({
+			placeHolder: "Enter package name to filter"
+		}).then(value => {
+			if (value) {
+				// Call your filtering function here
+				console.log(value)
+			}
+		});
     }
 
     refresh(): void {
@@ -424,9 +467,11 @@ class JarFilterProvider implements vscode.TreeDataProvider<JarEntry> {
 
     getChildren(element?: JarEntry): Thenable<JarEntry[]> {
         if (element) {
-            return Promise.resolve([]);
+            // If we have an element, return its children
+            return Promise.resolve(this.jarContentProvider.getEntries(element, true));
         } else {
-            return Promise.resolve([]);
+            // If no element is provided, return the root level entries
+            return Promise.resolve(this.jarContentProvider.getRootPackageEntries());
         }
     }
 
@@ -474,13 +519,21 @@ class GraphNode {
 	children: GraphNode[];
 
 	// true if directory, false if file
-	dir: boolean;
+	isDir: boolean;
+	
+	// true if Java .class file, false otherwise
+	isClassFile: boolean;
+
+	// true if Java package, false otherwise
+	isPackage: boolean;
 
 	constructor(filePath: string, dir: boolean) {
 		this.filePath = filePath;
 		this.children = [];
-		this.dir = dir;
+		this.isDir = dir;
 		this.fileName = "";
+		this.isClassFile = false;
+		this.isPackage = false;
 
 		// Parse file name
 		var parts = this.filePath.split("/");
@@ -490,6 +543,14 @@ class GraphNode {
 			}
 			else {
 				this.fileName = parts[parts.length - 1];
+			}
+		}
+
+		// determine if class file
+		if(!dir) {
+			var nameParts = this.fileName.split(".");
+			if(nameParts[nameParts.length - 1] === 'class') {
+				this.isClassFile = true;
 			}
 		}
 
