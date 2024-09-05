@@ -56,13 +56,11 @@
       "jarViewer": [
         {
           "id": "jarContents",
-          "name": "Explorer",
-          "initiallyCollapsed": false
+          "name": "Explorer"
         },
         {
           "id": "jarSearch",
-          "name": "Search",
-          "initiallyCollapsed": true
+          "name": "Search"
         }
       ]
     },
