@@ -515,7 +515,17 @@ class JarFilterProvider implements vscode.TreeDataProvider<JarEntry> {
         }
 
         // filter based on search query
-        this.jarContentProvider.packages = this.packages.filter(entry => entry.package.includes(searchQuery));
+        // this.jarContentProvider.packages = this.packages.filter(entry => entry.package.includes(searchQuery));
+        this.jarContentProvider.packages = this.packages.filter(entry => {
+            try {
+                const regex = new RegExp(searchQuery); 
+                return regex.test(entry.package); 
+            }
+            catch (error) {
+                console.error("Invalid search regular expression:", error);
+                return [];
+            }
+        });
 
         this.refresh();
     }
