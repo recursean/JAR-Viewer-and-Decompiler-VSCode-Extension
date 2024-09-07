@@ -2,7 +2,7 @@
   "name": "jar-viewer-and-decompiler",
   "displayName": "JAR Viewer and Decompiler",
   "description": "Browse and display decompiled contents of Java JAR files.",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "repository": {
     "type": "git",
     "url": "git@github.com:recursean/JAR-Viewer-and-Decompiler-VSCode-Extension.git"
@@ -18,21 +18,57 @@
   "activationEvents": [],
   "main": "./dist/extension.js",
   "contributes": {
+    "commands": [
+        {
+            "command": "jar-viewer-and-decompiler.viewJarContents",
+            "title": "Open With JAR Viewer and Decompiler"
+        },
+        {
+            "command": "jar-viewer-and-decompiler.openFile",
+            "title": "Open File in JAR"
+        },
+        {
+            "command": "jar-viewer-and-decompiler.printSignatures",
+            "title": "Print internal type signatures"
+        },
+        {
+            "command": "jar-viewer-and-decompiler.search",
+            "title": "Search for class files in JAR",
+            "icon": "media/search.svg"
+        },
+        {
+            "command": "jar-viewer-and-decompiler.reset",
+            "title": "Reset search view",
+            "icon": "media/reset.svg"
+        }
+    ],
     "menus": {
       "explorer/context": [
         {
-          "when": "resourceExtname == .jar",
-          "command": "jar-viewer-and-decompiler.viewJarContents",
-          "group": "navigation"
+            "when": "resourceExtname == .jar",
+            "command": "jar-viewer-and-decompiler.viewJarContents",
+            "group": "navigation"
         }
       ],
       "view/item/context": [
         {
-          "command": "jar-viewer-and-decompiler.printSignatures",
-          "when": "view == jarContents && viewItem == classfile",
-          "group": "navigation"
+            "command": "jar-viewer-and-decompiler.printSignatures",
+            "when": "view == jarContents && viewItem == classfile",
+            "group": "navigation"
         }
-      ]
+    ],
+      "view/title": [
+        {   
+            "command": "jar-viewer-and-decompiler.search",
+            "when": "view == jarSearch",
+            "group": "navigation"
+        },
+        {   
+            "command": "jar-viewer-and-decompiler.reset",
+            "when": "view == jarSearch",
+            "group": "navigation"
+        }
+        ]
     },
     "configuration": {
       "properties": {
@@ -64,20 +100,13 @@
         }
       ]
     },
-    "commands": [
-      {
-        "command": "jar-viewer-and-decompiler.viewJarContents",
-        "title": "Open With JAR Viewer and Decompiler"
-      },
-      {
-        "command": "jar-viewer-and-decompiler.openFile",
-        "title": "Open File in JAR"
-      },
-      {
-        "command": "jar-viewer-and-decompiler.printSignatures",
-        "title": "Print internal type signatures"
-      }
-    ]
+    "viewsWelcome": [
+        {
+          "view": "jarContents",
+          "contents": "Right click on a .jar file to launch this extension.",
+          "when": "workbenchState == empty"
+        }
+      ]
   },
   "scripts": {
     "vscode:prepublish": "npm run package",

@@ -16,6 +16,8 @@ const scheme = 'jar-viewer-and-decompiler';
 // global var used to share contents of file with editor view
 var fileContents = "";
 
+var searchView: JarFilterProvider;
+
 var debug = false;
 
 /**
@@ -36,6 +38,8 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(vscode.commands.registerCommand('jar-viewer-and-decompiler.viewJarContents', viewJarContents));
     context.subscriptions.push(vscode.commands.registerCommand('jar-viewer-and-decompiler.openFile', openFile));
     context.subscriptions.push(vscode.commands.registerCommand('jar-viewer-and-decompiler.printSignatures', printSignatures));
+    context.subscriptions.push(vscode.commands.registerCommand('jar-viewer-and-decompiler.search', search));
+    context.subscriptions.push(vscode.commands.registerCommand('jar-viewer-and-decompiler.reset', reset));
 
     // Prepare and register document provider for opening files 
     // in editor.
@@ -176,6 +180,30 @@ async function printSignatures(jarEntry: JarEntry) {
         await vscode.window.showTextDocument(doc, { preview: true });
     });
 }
+
+/**
+ * Prompts user for fully qualified class or package name to
+ * search for in the JAR file.
+ */
+async function search() {
+    // Show the input box to collect the search query
+    const searchQuery = await vscode.window.showInputBox({
+        prompt: "Enter fully qualified class",
+        placeHolder: "Search for Java class or package"
+    });
+
+    if (searchQuery) {
+        searchView.filterPackages(searchQuery);
+    }
+}
+
+/**
+ * Resets the search view to display an unfiltered list.
+ */
+async function reset() {
+    searchView.reset();
+}
+
 /**
  * 
  *  MARK: Classes
@@ -229,9 +257,9 @@ class JarContentProvider implements vscode.TreeDataProvider<JarEntry> {
         this.jarMap = new Map<string, GraphNode>();
         this.parseJarFile().then(result => {
             // display search view
-            const jarFilterProvider = new JarFilterProvider(this);
-            const filterView = vscode.window.createTreeView('jarSearch', {
-                treeDataProvider: jarFilterProvider,
+            searchView = new JarFilterProvider(this);
+            var filterView = vscode.window.createTreeView('jarSearch', {
+                treeDataProvider: searchView,
                 showCollapseAll: true,
             });
         });
@@ -352,7 +380,7 @@ class JarContentProvider implements vscode.TreeDataProvider<JarEntry> {
 
         this.packages.forEach(function (child) {
             const entry = new JarEntry(
-                child.filePath.replaceAll("/",".").substring(0, child.filePath.length-1), 
+                child.package, 
                 child.filePath,
                 vscode.TreeItemCollapsibleState.Collapsed 
             );
@@ -419,7 +447,7 @@ class JarContentProvider implements vscode.TreeDataProvider<JarEntry> {
 
                         // if class file, mark parent node as Java package
                         if(n.isClassFile && !parentNode.isPackage) {
-                            parentNode.isPackage = true;
+                            parentNode.setPackage(true);
                             this.packages.push(parentNode);
                         }
                     }
@@ -448,8 +476,12 @@ class JarFilterProvider implements vscode.TreeDataProvider<JarEntry> {
 
     private jarContentProvider: JarContentProvider;
 
+    // unfiltered list of packages
+    packages: GraphNode[];
+
     constructor(jarContentProvider: JarContentProvider) {
         this.jarContentProvider = jarContentProvider;
+        this.packages = [];
     }
 
     refresh(): void {
@@ -470,11 +502,31 @@ class JarFilterProvider implements vscode.TreeDataProvider<JarEntry> {
         }
     }
 
-    // filterPackages(searchQuery: string) {
-    //     const filteredEntries = this.jarEntries.filter(entry => entry.packageName.includes(searchQuery));
-    //     this.jarEntries = filteredEntries;
-    //     this.refresh();
-    // }
+    /**
+     * Filters view to only displays classes and packages that match the search
+     * query.
+     * 
+     * @param searchQuery Fully qualified class file to search
+     */
+    filterPackages(searchQuery: string) {
+        // store unfiltered list of packages if not already done
+        if(this.packages.length === 0) {
+            this.packages = this.jarContentProvider.packages;
+        }
+
+        // filter based on search query
+        this.jarContentProvider.packages = this.packages.filter(entry => entry.package.includes(searchQuery));
+
+        this.refresh();
+    }
+    
+    /**
+     * Reset to unfiltered view.
+     */
+    reset() {
+        this.jarContentProvider.packages = this.packages;
+        this.refresh();
+    }
 }
 
 /**
@@ -510,6 +562,9 @@ class GraphNode {
     // full path to file or dir in jar
     filePath: string;
 
+    // package name if isPackage. this is file path with . delims
+    package: string;
+
     // files or dirs one level deeper than this node
     children: GraphNode[];
 
@@ -527,6 +582,7 @@ class GraphNode {
         this.children = [];
         this.isDir = dir;
         this.fileName = "";
+        this.package = "";
         this.isClassFile = false;
         this.isPackage = false;
 
@@ -551,6 +607,22 @@ class GraphNode {
 
         if(debug) {
             console.log("New GraphNode dir: " + this.filePath + " name: " + this.fileName);
+        }
+    }
+
+    /**
+     * Set status of isPackage and set package name. Package name is just file 
+     * path with slash delimiters replaced with periods.
+     * 
+     * @param isPackage true if this node represents a package
+     */
+    setPackage(isPackage: boolean) {
+        this.isPackage = isPackage;
+        if(isPackage) {
+            this.package = this.filePath.replaceAll("/",".").substring(0, this.filePath.length-1);
+        }
+        else {
+            this.package = "";
         }
     }
 }
