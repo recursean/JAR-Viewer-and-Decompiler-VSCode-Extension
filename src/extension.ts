@@ -42,6 +42,16 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(vscode.commands.registerCommand('jar-viewer-and-decompiler.searchRegex', searchRegex));
     context.subscriptions.push(vscode.commands.registerCommand('jar-viewer-and-decompiler.reset', reset));
 
+    vscode.window.createTreeView('jarContents', {
+        treeDataProvider: new JarContentProvider(undefined),
+        showCollapseAll: false
+    });
+
+    vscode.window.createTreeView('jarSearch', {
+        treeDataProvider: new JarFilterProvider(undefined),
+        showCollapseAll: false
+    });
+    
     // Prepare and register document provider for opening files 
     // in editor.
     const provider = new TextDocumentContentProvider();
@@ -77,7 +87,7 @@ function viewJarContents(uri: vscode.Uri) {
 
     // build content to display in extension view 
     const jarContentProvider = new JarContentProvider(uri);
-    const explorerView = vscode.window.createTreeView('jarContents', {
+    vscode.window.createTreeView('jarContents', {
         treeDataProvider: jarContentProvider,
         showCollapseAll: true,
     });
@@ -240,12 +250,20 @@ class JarContentProvider implements vscode.TreeDataProvider<JarEntry> {
 
     packages: GraphNode[];
 
-    constructor(private uri: vscode.Uri) {
+    constructor(private uri: vscode.Uri | undefined) {
+        // init
+        this.jarMap = new Map<string, GraphNode>();
+        this.packages = [];
+        this.jarFileName = "";
+        this.jarFilePath = "";
+
+        // return early if no jar selected
+        if(!uri) {
+            return;
+        }
+
         // Save file path
         this.jarFilePath = uri.fsPath;
-        
-        // init
-        this.packages = [];
 
         if(debug) {
             console.log("Processing JAR file: " + this.jarFilePath);
@@ -264,19 +282,15 @@ class JarContentProvider implements vscode.TreeDataProvider<JarEntry> {
 
         if(parts.length > 0) {
             this.jarFileName = parts[parts.length - 1];
-        }
-        else {
-            this.jarFileName = "<error reading jar>";
-        }
-        this.jarMap = new Map<string, GraphNode>();
-        this.parseJarFile().then(result => {
-            // display search view
-            searchView = new JarFilterProvider(this);
-            var filterView = vscode.window.createTreeView('jarSearch', {
-                treeDataProvider: searchView,
-                showCollapseAll: true,
+            this.parseJarFile().then(result => {
+                // display search view
+                searchView = new JarFilterProvider(this);
+                var filterView = vscode.window.createTreeView('jarSearch', {
+                    treeDataProvider: searchView,
+                    showCollapseAll: true,
+                });
             });
-        });
+        }
     }
 
     getTreeItem(element: JarEntry): vscode.TreeItem {
@@ -284,10 +298,16 @@ class JarContentProvider implements vscode.TreeDataProvider<JarEntry> {
     }
 
     getChildren(element?: JarEntry): Thenable<JarEntry[]> {
-        if (element) {
+        // return early if no jar selected
+        if(!this.uri) {
+            return Promise.resolve([]);
+        }
+
+        if(element) {
             // If we have an element, return its children
             return Promise.resolve(this.getEntries(element, false));
-        } else {
+        } 
+        else {
             // If no element is provided, return the root level entries
             return Promise.resolve(this.getRootEntries());
         }
@@ -309,7 +329,7 @@ class JarContentProvider implements vscode.TreeDataProvider<JarEntry> {
             vscode.TreeItemCollapsibleState.Collapsed // Indicates that it can be expanded to show child items
         )];
     }
-
+    
     /**
      * Return files and directories in the selected 
      * directory. This method will only ever be called 
@@ -317,8 +337,8 @@ class JarContentProvider implements vscode.TreeDataProvider<JarEntry> {
      * 
      * @param path path to directory that was selected
      * @returns 
-     */
-    getEntries(selectedEntry: JarEntry, fromSearch: boolean): JarEntry[] {
+    */
+   getEntries(selectedEntry: JarEntry, fromSearch: boolean): JarEntry[] {
         // entries that will be returned
         var entries: JarEntry[] = [];
         
@@ -424,9 +444,9 @@ class JarContentProvider implements vscode.TreeDataProvider<JarEntry> {
         // Parse jar file
         try {
             // Read the content of the JAR file
-            const jarData = await vscode.workspace.fs.readFile(this.uri);
+            const jarData = await vscode.workspace.fs.readFile(this.uri!);
             
-            // Load the JAR file data with JSZip
+            // Load the JAR file data with JSZip5
             this.jarFile = (await JSZip.loadAsync(jarData)) as unknown as JSZip;
             
             // Iterate through the contents of the JAR file
@@ -488,15 +508,17 @@ class JarFilterProvider implements vscode.TreeDataProvider<JarEntry> {
     private _onDidChangeTreeData: vscode.EventEmitter<JarEntry | undefined | null | void> = new vscode.EventEmitter<JarEntry | undefined | null | void>();
     readonly onDidChangeTreeData: vscode.Event<JarEntry | undefined | null | void> = this._onDidChangeTreeData.event;
 
-    private jarContentProvider: JarContentProvider;
-
     // unfiltered list of packages
     packages: GraphNode[];
 
-    constructor(jarContentProvider: JarContentProvider) {
-        this.jarContentProvider = jarContentProvider;
+    constructor(private jarContentProvider: JarContentProvider | undefined) {
+        if(!jarContentProvider) {
+            this.packages = [];
+            return;
+        }
+
         // store unfiltered list of packages
-        this.packages = this.jarContentProvider.packages;
+        this.packages = this.jarContentProvider!.packages;
     }
 
     refresh(): void {
@@ -508,12 +530,17 @@ class JarFilterProvider implements vscode.TreeDataProvider<JarEntry> {
     }
 
     getChildren(element?: JarEntry): Thenable<JarEntry[]> {
+        // return early if no jar file selected
+        if(!this.jarContentProvider) {
+            return Promise.resolve([]);
+        }
+
         if (element) {
-            return Promise.resolve(this.jarContentProvider.getEntries(element, true));
+            return Promise.resolve(this.jarContentProvider!.getEntries(element, true));
         } 
         else {
             // If no element is provided, return the root level entrie
-            return Promise.resolve(this.jarContentProvider.getRootPackageEntries());
+            return Promise.resolve(this.jarContentProvider!.getRootPackageEntries());
         }
     }
 
@@ -527,11 +554,11 @@ class JarFilterProvider implements vscode.TreeDataProvider<JarEntry> {
     filterPackages(searchQuery: string, isRegex: boolean) {
         // normal substring search
         if(!isRegex) {
-            this.jarContentProvider.packages = this.packages.filter(entry => entry.package.includes(searchQuery));
+            this.jarContentProvider!.packages = this.packages.filter(entry => entry.package.includes(searchQuery));
         }
         // regular expression search
         else {
-            this.jarContentProvider.packages = this.packages.filter(entry => {
+            this.jarContentProvider!.packages = this.packages.filter(entry => {
                 try {
                     const regex = new RegExp(searchQuery); 
                     return regex.test(entry.package); 
@@ -550,7 +577,9 @@ class JarFilterProvider implements vscode.TreeDataProvider<JarEntry> {
      * Reset to unfiltered view.
      */
     reset() {
-        this.jarContentProvider.packages = this.packages;
+        if(this.jarContentProvider) {
+            this.jarContentProvider.packages = this.packages;
+        }
         this.refresh();
     }
 }

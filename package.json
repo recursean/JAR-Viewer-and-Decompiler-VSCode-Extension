@@ -123,7 +123,7 @@
         {
           "view": "jarContents",
           "contents": "Right click on a .jar file to launch this extension.",
-          "when": "workbenchState == empty"
+          "when": "view == jarContents"
         }
       ]
   },
