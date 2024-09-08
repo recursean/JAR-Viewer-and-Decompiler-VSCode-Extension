@@ -197,6 +197,11 @@ async function printSignatures(jarEntry: JarEntry) {
  * search for in the JAR file.
  */
 async function search() {
+    // return early if no jar file has been selected
+    if(!searchView) {
+        return;
+    }
+
     const searchQuery = await vscode.window.showInputBox({
         prompt: "Enter fully qualified package",
         placeHolder: "Search for Java package"
@@ -211,6 +216,11 @@ async function search() {
  * Prompts user for regular expression search.
  */
 async function searchRegex() {
+    // return early if no jar file has been selected
+    if(!searchView) {
+        return;
+    }
+
     const searchQuery = await vscode.window.showInputBox({
         prompt: "Enter package regular expression",
         placeHolder: "Search for Java package"
@@ -225,6 +235,11 @@ async function searchRegex() {
  * Resets the search view to display an unfiltered list.
  */
 async function reset() {
+    // return early if no jar file has been selected
+    if(!searchView) {
+        return;
+    }
+    
     searchView.reset();
 }
 
