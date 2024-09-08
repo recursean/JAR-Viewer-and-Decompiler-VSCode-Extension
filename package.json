@@ -118,14 +118,7 @@
           "name": "Search"
         }
       ]
-    },
-    "viewsWelcome": [
-        {
-          "view": "jarContents",
-          "contents": "Right click on a .jar file to launch this extension.",
-          "when": "view == jarContents"
-        }
-      ]
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run package",
