@@ -4,10 +4,11 @@ All notable changes to the "jar-viewer-and-decompiler" extension will be documen
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [1.2.0] - 2024-09-02
+## [1.2.0] - 2024-09-08
 
 ### Added
-- Search and filter by package name
+- Search and filter for Java packages in JAR
+- Collapse all button
 
 ## [1.1.0] - 2024-06-02
 

@@ -9,6 +9,7 @@ Java class files in the JARs can be decompiled. Decompiling class files requires
 ![Extension preview](https://raw.githubusercontent.com/recursean/JAR-Viewer-and-Decompiler-VSCode-Extension/main/media/preview.gif)
 
 Additional Features
+- Search for Java packages within JAR using regular expressions
 - Display internal type signatures via right click on .class files within JAR
 
 ## Requirements
@@ -29,8 +30,7 @@ This extension contributes the following settings:
 
 ### 1.2.0
 
-Add search and filter.
-
+Add search.
 
 ### 1.1.0
 
