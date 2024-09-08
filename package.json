@@ -33,13 +33,27 @@
         },
         {
             "command": "jar-viewer-and-decompiler.search",
-            "title": "Search for class files in JAR",
-            "icon": "media/search.svg"
+            "title": "Search for packages in JAR",
+            "icon": {
+                "dark": "media/search-white.svg",
+                "light": "media/search-black.svg"
+            }
+        },
+        {
+            "command": "jar-viewer-and-decompiler.searchRegex",
+            "title": "Search regular expression for packages in JAR",
+            "icon": {
+                "dark": "media/regex-white.svg",
+                "light": "media/regex-black.svg"
+            }
         },
         {
             "command": "jar-viewer-and-decompiler.reset",
-            "title": "Reset search view",
-            "icon": "media/reset.svg"
+            "title": "Search reset",
+            "icon": {
+                "dark": "media/reset-white.svg",
+                "light": "media/reset-black.svg"
+            }
         }
     ],
     "menus": {
@@ -60,6 +74,11 @@
       "view/title": [
         {   
             "command": "jar-viewer-and-decompiler.search",
+            "when": "view == jarSearch",
+            "group": "navigation"
+        },
+        {   
+            "command": "jar-viewer-and-decompiler.searchRegex",
             "when": "view == jarSearch",
             "group": "navigation"
         },

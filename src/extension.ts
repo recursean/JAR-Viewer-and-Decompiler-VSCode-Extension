@@ -39,6 +39,7 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(vscode.commands.registerCommand('jar-viewer-and-decompiler.openFile', openFile));
     context.subscriptions.push(vscode.commands.registerCommand('jar-viewer-and-decompiler.printSignatures', printSignatures));
     context.subscriptions.push(vscode.commands.registerCommand('jar-viewer-and-decompiler.search', search));
+    context.subscriptions.push(vscode.commands.registerCommand('jar-viewer-and-decompiler.searchRegex', searchRegex));
     context.subscriptions.push(vscode.commands.registerCommand('jar-viewer-and-decompiler.reset', reset));
 
     // Prepare and register document provider for opening files 
@@ -182,18 +183,31 @@ async function printSignatures(jarEntry: JarEntry) {
 }
 
 /**
- * Prompts user for fully qualified class or package name to
+ * Prompts user for fully qualified package name to
  * search for in the JAR file.
  */
 async function search() {
-    // Show the input box to collect the search query
     const searchQuery = await vscode.window.showInputBox({
-        prompt: "Enter fully qualified class",
-        placeHolder: "Search for Java class or package"
+        prompt: "Enter fully qualified package",
+        placeHolder: "Search for Java package"
     });
 
-    if (searchQuery) {
-        searchView.filterPackages(searchQuery);
+    if(searchQuery) {
+        searchView.filterPackages(searchQuery, false);
+    }
+}
+
+/**
+ * Prompts user for regular expression search.
+ */
+async function searchRegex() {
+    const searchQuery = await vscode.window.showInputBox({
+        prompt: "Enter package regular expression",
+        placeHolder: "Search for Java package"
+    });
+
+    if(searchQuery) {
+        searchView.filterPackages(searchQuery, true);
     }
 }
 
@@ -481,7 +495,8 @@ class JarFilterProvider implements vscode.TreeDataProvider<JarEntry> {
 
     constructor(jarContentProvider: JarContentProvider) {
         this.jarContentProvider = jarContentProvider;
-        this.packages = [];
+        // store unfiltered list of packages
+        this.packages = this.jarContentProvider.packages;
     }
 
     refresh(): void {
@@ -507,25 +522,26 @@ class JarFilterProvider implements vscode.TreeDataProvider<JarEntry> {
      * query.
      * 
      * @param searchQuery Fully qualified class file to search
+     * @param isRegex true if searchQuery is a regular expression
      */
-    filterPackages(searchQuery: string) {
-        // store unfiltered list of packages if not already done
-        if(this.packages.length === 0) {
-            this.packages = this.jarContentProvider.packages;
+    filterPackages(searchQuery: string, isRegex: boolean) {
+        // normal substring search
+        if(!isRegex) {
+            this.jarContentProvider.packages = this.packages.filter(entry => entry.package.includes(searchQuery));
         }
-
-        // filter based on search query
-        // this.jarContentProvider.packages = this.packages.filter(entry => entry.package.includes(searchQuery));
-        this.jarContentProvider.packages = this.packages.filter(entry => {
-            try {
-                const regex = new RegExp(searchQuery); 
-                return regex.test(entry.package); 
-            }
-            catch (error) {
-                console.error("Invalid search regular expression:", error);
-                return [];
-            }
-        });
+        // regular expression search
+        else {
+            this.jarContentProvider.packages = this.packages.filter(entry => {
+                try {
+                    const regex = new RegExp(searchQuery); 
+                    return regex.test(entry.package); 
+                }
+                catch (error) {
+                    console.error("Invalid search regular expression:", error);
+                    return [];
+                }
+            });
+        }
 
         this.refresh();
     }
@@ -572,7 +588,7 @@ class GraphNode {
     // full path to file or dir in jar
     filePath: string;
 
-    // package name if isPackage. this is file path with . delims
+    // fully qualified Java path. this is file path with . delims
     package: string;
 
     // files or dirs one level deeper than this node
@@ -612,6 +628,7 @@ class GraphNode {
             var nameParts = this.fileName.split(".");
             if(nameParts[nameParts.length - 1] === 'class') {
                 this.isClassFile = true;
+                this.package = this.filePath.replaceAll("/",".").substring(0, this.filePath.length-1);
             }
         }
 
