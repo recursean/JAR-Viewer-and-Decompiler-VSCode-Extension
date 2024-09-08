@@ -30,7 +30,7 @@ This extension contributes the following settings:
 
 ### 1.2.0
 
-Add search.
+Search for Java packages in JAR.
 
 ### 1.1.0
 
