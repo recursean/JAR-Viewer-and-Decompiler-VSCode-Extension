@@ -13,6 +13,9 @@ const os = require('os');
 // scheme used when opening files in editor view
 const scheme = 'jar-viewer-and-decompiler';
 
+// default CFR output size (KBs)
+const CFR_OUTPUT_SIZE_DEFAULT = 250;
+
 // global var used to share contents of file with editor view
 var fileContents = "";
 
@@ -54,8 +57,8 @@ export function activate(context: vscode.ExtensionContext) {
     
     // Prepare and register document provider for opening files 
     // in editor.
-    const provider = new TextDocumentContentProvider();
-    context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider(scheme, provider));
+    const documentProvider = new TextDocumentContentProvider();
+    context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider(scheme, documentProvider));
 }
 
 /**
@@ -111,12 +114,18 @@ async function openFile(filePath: string, jarFile: JSZip, jarFileName: string, j
             var parts = filePath.split(".");
             // was a java class file selected?
             if(parts[parts.length - 1] === 'class') {
-                // Retrieve the path to the CFR JAR file from the extension settings
-                const cfrPath = vscode.workspace.getConfiguration().get<string>('jar-viewer-and-decompiler.cfrPath');
+                // get path to CFR JAR file from extension settings
+                const cfrPath = vscode.workspace.getConfiguration().get<string>(
+                    'jar-viewer-and-decompiler.cfrPath'
+                );
+                
+                // get specified size for CFR output from extension settings
+                const cfrOutputSize = vscode.workspace.getConfiguration().get<number>(
+                    'jar-viewer-and-decompiler.cfrOutputSize') ?? CFR_OUTPUT_SIZE_DEFAULT;
                 
                 // run CFR to decompile selected class file
-                const command = `java -jar ${cfrPath} --extraclasspath ${jarFilePath} ${filePath}`;
-                cp.exec(command, async (error, stdout, stderr) => {
+                const command = `java -jar ${cfrPath} --extraclasspath ${jarFilePath} ${filePath}`;                
+                cp.exec(command, {maxBuffer: 1024 * cfrOutputSize}, async (error, stdout, stderr) => {
                     if (error) {
                         console.error(`CFR error: ${error}`);
                         return vscode.window.showErrorMessage('Decompilation error: ' + error.message);
@@ -130,11 +139,8 @@ async function openFile(filePath: string, jarFile: JSZip, jarFileName: string, j
                     fileContents = stdout;
             
                     // show contents of file in editor viewer
-                    const doc = await vscode.workspace.openTextDocument(uri); 
-                    
-                    // set syntax highlighting
+                    const doc = await vscode.workspace.openTextDocument(uri);                     
                     await vscode.languages.setTextDocumentLanguage(doc, 'java');
-
                     await vscode.window.showTextDocument(doc, { preview: true });
                 });
             }
@@ -699,7 +705,7 @@ class GraphNode {
 }
 
 /**
- * This class is used when vscode.workspace.openTextDocument(uri) is called
+ * This class is used when vscode.workspace.ouripenTextDocument(uri) is called
  * to open a selected file from the jar file. 
  */
 class TextDocumentContentProvider implements vscode.TextDocumentContentProvider {
