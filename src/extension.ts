@@ -20,6 +20,7 @@ const CFR_OUTPUT_SIZE_DEFAULT = 250;
 var fileContents = "";
 
 var searchView: JarFilterProvider;
+var documentProvider: TextDocumentContentProvider;
 
 var debug = false;
 
@@ -57,7 +58,7 @@ export function activate(context: vscode.ExtensionContext) {
     
     // Prepare and register document provider for opening files 
     // in editor.
-    const documentProvider = new TextDocumentContentProvider();
+    documentProvider = new TextDocumentContentProvider();
     context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider(scheme, documentProvider));
 }
 
@@ -122,7 +123,13 @@ async function openFile(filePath: string, jarFile: JSZip, jarFileName: string, j
                 // get specified size for CFR output from extension settings
                 const cfrOutputSize = vscode.workspace.getConfiguration().get<number>(
                     'jar-viewer-and-decompiler.cfrOutputSize') ?? CFR_OUTPUT_SIZE_DEFAULT;
-                
+
+                // open empty document as placeholder until CFR returns
+                fileContents = '';
+                const doc = await vscode.workspace.openTextDocument(uri);                     
+                await vscode.languages.setTextDocumentLanguage(doc, 'java');
+                const editor = await vscode.window.showTextDocument(doc, { preview: true });
+
                 // run CFR to decompile selected class file
                 const command = `java -jar ${cfrPath} --extraclasspath ${jarFilePath} ${filePath}`;                
                 cp.exec(command, {maxBuffer: 1024 * cfrOutputSize}, async (error, stdout, stderr) => {
@@ -139,9 +146,7 @@ async function openFile(filePath: string, jarFile: JSZip, jarFileName: string, j
                     fileContents = stdout;
             
                     // show contents of file in editor viewer
-                    const doc = await vscode.workspace.openTextDocument(uri);                     
-                    await vscode.languages.setTextDocumentLanguage(doc, 'java');
-                    await vscode.window.showTextDocument(doc, { preview: true });
+                    documentProvider.updateContent(uri);
                 });
             }
             else {
@@ -715,5 +720,10 @@ class TextDocumentContentProvider implements vscode.TextDocumentContentProvider 
     provideTextDocumentContent(uri: vscode.Uri): string {
         // return most recent file that was read 
         return fileContents;
+    }
+
+    // Method to notify listeners of content change
+    updateContent(uri: vscode.Uri) {
+        this.onDidChangeEmitter.fire(uri);
     }
 }
