@@ -28,6 +28,11 @@ This extension contributes the following settings:
 
 ## Release Notes
 
+### 1.2.1
+
+Added new extension setting "cfrOutputSize" to solve error when decompiling large .class
+files: "stdout maxBuffer length exceeded"
+
 ### 1.2.0
 
 Search for Java packages in JAR.
