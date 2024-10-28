@@ -20,6 +20,8 @@ const CFR_OUTPUT_SIZE_DEFAULT = 250;
 var fileContents = "";
 
 var searchView: JarFilterProvider;
+
+// used to handle opening of files in JAR 
 var documentProvider: TextDocumentContentProvider;
 
 var debug = false;
@@ -161,8 +163,8 @@ async function openFile(filePath: string, jarFile: JSZip, jarFileName: string, j
                                 // hide progress bar
                                 resolve();
 
-                                if (!token.isCancellationRequested) {
-
+                                // display file if CFR process was not cancelled by user
+                                if(!token.isCancellationRequested) {
                                     // set file contents to output of cfr
                                     fileContents = stdout;
                             
@@ -171,7 +173,7 @@ async function openFile(filePath: string, jarFile: JSZip, jarFileName: string, j
                                 }
                             });
 
-                            // handle cancellation of process by user clicking Cancel on progress message
+                            // handle cancellation of CFR process by user
                             token.onCancellationRequested(() => {
                                 cfrProcess.kill(); 
                                 resolve();
