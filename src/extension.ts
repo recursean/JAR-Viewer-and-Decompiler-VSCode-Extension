@@ -148,9 +148,12 @@ async function openFile(filePath: string, jarFile: JSZip, jarFileName: string, j
                             const cfrProcess = cp.exec(command, {maxBuffer: 1024 * cfrOutputSize}, async (error, stdout, stderr) => {
                                 if (error) {
                                     console.error(`CFR error: ${error}`);
-                                    if (token.isCancellationRequested) {
+                                    if(token.isCancellationRequested) {
                                         vscode.window.showWarningMessage("Decompilation cancelled.");
                                     } 
+                                    else if(error.message.includes("stdout maxBuffer length exceeded")) {
+                                        vscode.window.showErrorMessage('Decompilation error. Try increasing the cfrOutputSize setting for this extension. ' + error.message);
+                                    }
                                     else {
                                         vscode.window.showErrorMessage('Decompilation error: ' + error.message);
                                     }
