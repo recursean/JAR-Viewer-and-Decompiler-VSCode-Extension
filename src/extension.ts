@@ -130,24 +130,55 @@ async function openFile(filePath: string, jarFile: JSZip, jarFileName: string, j
                 await vscode.languages.setTextDocumentLanguage(doc, 'java');
                 const editor = await vscode.window.showTextDocument(doc, { preview: true });
 
-                // run CFR to decompile selected class file
-                const command = `java -jar ${cfrPath} --extraclasspath ${jarFilePath} ${filePath}`;                
-                cp.exec(command, {maxBuffer: 1024 * cfrOutputSize}, async (error, stdout, stderr) => {
-                    if (error) {
-                        console.error(`CFR error: ${error}`);
-                        return vscode.window.showErrorMessage('Decompilation error: ' + error.message);
-                    }
+                // CFR command to decompile selected class file
+                const command = `java -jar ${cfrPath} --extraclasspath ${jarFilePath} ${filePath}`;        
+                
+                // display progress message while CFR is running
+                await vscode.window.withProgress(
+                    {
+                        location: vscode.ProgressLocation.Notification,
+                        title: "Decompiling...",
+                        cancellable: true,
+                    },
+                    async (progress, token) => {
+                        return new Promise<void>((resolve) => {                
+                            // run CFR to decompile selected class file
+                            const cfrProcess = cp.exec(command, {maxBuffer: 1024 * cfrOutputSize}, async (error, stdout, stderr) => {
+                                if (error) {
+                                    console.error(`CFR error: ${error}`);
+                                    if (token.isCancellationRequested) {
+                                        vscode.window.showWarningMessage("Decompilation cancelled.");
+                                    } 
+                                    else {
+                                        vscode.window.showErrorMessage('Decompilation error: ' + error.message);
+                                    }
+                                }
 
-                    if(stderr.length > 0) {
-                        console.error(`CFR error: ${stderr}`);
-                    }
+                                if(stderr.length > 0) {
+                                    console.error(`CFR stderr: ${stderr}`);
+                                }
+                                
+                                // hide progress bar
+                                resolve();
 
-                    // set file contents to output of cfr
-                    fileContents = stdout;
-            
-                    // show contents of file in editor viewer
-                    documentProvider.updateContent(uri);
-                });
+                                if (!token.isCancellationRequested) {
+
+                                    // set file contents to output of cfr
+                                    fileContents = stdout;
+                            
+                                    // show contents of file in editor viewer
+                                    documentProvider.updateContent(uri);
+                                }
+                            });
+
+                            // handle cancellation of process by user clicking Cancel on progress message
+                            token.onCancellationRequested(() => {
+                                cfrProcess.kill(); 
+                                resolve();
+                            });
+                        });
+                    }
+                );
             }
             else {
                 // read contents of selected file
