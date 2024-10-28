@@ -146,13 +146,25 @@ async function openFile(filePath: string, jarFile: JSZip, jarFileName: string, j
                         return new Promise<void>((resolve) => {                
                             // run CFR to decompile selected class file
                             const cfrProcess = cp.exec(command, {maxBuffer: 1024 * cfrOutputSize}, async (error, stdout, stderr) => {
-                                if (error) {
+                                if(error) {
                                     console.error(`CFR error: ${error}`);
                                     if(token.isCancellationRequested) {
                                         vscode.window.showWarningMessage("Decompilation cancelled.");
                                     } 
                                     else if(error.message.includes("stdout maxBuffer length exceeded")) {
-                                        vscode.window.showErrorMessage('Decompilation error. Try increasing the cfrOutputSize setting for this extension. ' + error.message);
+                                        // create link to cfrOutputSize setting
+                                        const cfrOutputSizeLink = vscode.Uri.parse(
+                                            `command:workbench.action.openSettings?${encodeURIComponent(
+                                                '"jar-viewer-and-decompiler.cfrOutputSize"'
+                                            )}`
+                                        );
+
+                                        // display error message with link to setting
+                                        vscode.window.showErrorMessage(
+                                            `Decompilation error. Try increasing the 
+                                            [cfrOutputSize](${cfrOutputSizeLink}) setting for this extension. 
+                                            ${error.message}`
+                                        );
                                     }
                                     else {
                                         vscode.window.showErrorMessage('Decompilation error: ' + error.message);

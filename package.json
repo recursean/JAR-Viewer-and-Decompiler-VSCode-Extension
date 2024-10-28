@@ -101,7 +101,7 @@
           "default": 250,
           "minimum": 1,
           "maximum": 1048576,
-          "description": "CFR decompiler output buffer size. Specified in KBs."
+          "description": "CFR decompiler output buffer size. Specified in kilobytes (KB)."
         }
       }
     },
