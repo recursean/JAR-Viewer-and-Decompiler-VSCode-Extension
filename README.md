@@ -31,7 +31,7 @@ This extension contributes the following settings:
 
 ### 1.2.1
 
-New extension setting "cfrOutputSize" to solve error when decompiling large .class files
+New extension setting "cfrOutputSize" to solve error when decompiling large .class files.
 
 ### 1.2.0
 
