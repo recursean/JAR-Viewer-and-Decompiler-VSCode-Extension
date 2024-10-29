@@ -4,6 +4,15 @@ All notable changes to the "jar-viewer-and-decompiler" extension will be documen
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.2.1] - 2024-10-28
+
+### Fixed
+- Decompiling large .class files results in error: "stdout maxBuffer length exceeded"
+
+### Added
+- New extension setting "cfrOutputSize" to specify maximum CFR output buffer size
+- New "Cancel" button to cancel long-running CFR decompilation processes
+
 ## [1.2.0] - 2024-09-08
 
 ### Added

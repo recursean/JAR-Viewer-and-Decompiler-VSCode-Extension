@@ -13,10 +13,16 @@ const os = require('os');
 // scheme used when opening files in editor view
 const scheme = 'jar-viewer-and-decompiler';
 
+// default CFR output size (KBs)
+const CFR_OUTPUT_SIZE_DEFAULT = 250;
+
 // global var used to share contents of file with editor view
 var fileContents = "";
 
 var searchView: JarFilterProvider;
+
+// used to handle opening of files in JAR 
+var documentProvider: TextDocumentContentProvider;
 
 var debug = false;
 
@@ -54,8 +60,8 @@ export function activate(context: vscode.ExtensionContext) {
     
     // Prepare and register document provider for opening files 
     // in editor.
-    const provider = new TextDocumentContentProvider();
-    context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider(scheme, provider));
+    documentProvider = new TextDocumentContentProvider();
+    context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider(scheme, documentProvider));
 }
 
 /**
@@ -111,32 +117,85 @@ async function openFile(filePath: string, jarFile: JSZip, jarFileName: string, j
             var parts = filePath.split(".");
             // was a java class file selected?
             if(parts[parts.length - 1] === 'class') {
-                // Retrieve the path to the CFR JAR file from the extension settings
-                const cfrPath = vscode.workspace.getConfiguration().get<string>('jar-viewer-and-decompiler.cfrPath');
+                // get path to CFR JAR file from extension settings
+                const cfrPath = vscode.workspace.getConfiguration().get<string>(
+                    'jar-viewer-and-decompiler.cfrPath'
+                );
                 
-                // run CFR to decompile selected class file
-                const command = `java -jar ${cfrPath} --extraclasspath ${jarFilePath} ${filePath}`;
-                cp.exec(command, async (error, stdout, stderr) => {
-                    if (error) {
-                        console.error(`CFR error: ${error}`);
-                        return vscode.window.showErrorMessage('Decompilation error: ' + error.message);
+                // get specified size for CFR output from extension settings
+                const cfrOutputSize = vscode.workspace.getConfiguration().get<number>(
+                    'jar-viewer-and-decompiler.cfrOutputSize') ?? CFR_OUTPUT_SIZE_DEFAULT;
+
+                // open empty document as placeholder until CFR returns
+                fileContents = '';
+                const doc = await vscode.workspace.openTextDocument(uri);                     
+                await vscode.languages.setTextDocumentLanguage(doc, 'java');
+                const editor = await vscode.window.showTextDocument(doc, { preview: true });
+
+                // CFR command to decompile selected class file
+                const command = `java -jar ${cfrPath} --extraclasspath ${jarFilePath} ${filePath}`;        
+                
+                // display progress message while CFR is running
+                await vscode.window.withProgress(
+                    {
+                        location: vscode.ProgressLocation.Notification,
+                        title: "Decompiling...",
+                        cancellable: true,
+                    },
+                    async (progress, token) => {
+                        return new Promise<void>((resolve) => {                
+                            // run CFR to decompile selected class file
+                            const cfrProcess = cp.exec(command, {maxBuffer: 1024 * cfrOutputSize}, async (error, stdout, stderr) => {
+                                if(error) {
+                                    console.error(`CFR error: ${error}`);
+                                    if(token.isCancellationRequested) {
+                                        vscode.window.showWarningMessage("Decompilation cancelled.");
+                                    } 
+                                    else if(error.message.includes("stdout maxBuffer length exceeded")) {
+                                        // create link to cfrOutputSize setting
+                                        const cfrOutputSizeLink = vscode.Uri.parse(
+                                            `command:workbench.action.openSettings?${encodeURIComponent(
+                                                '"jar-viewer-and-decompiler.cfrOutputSize"'
+                                            )}`
+                                        );
+
+                                        // display error message with link to setting
+                                        vscode.window.showErrorMessage(
+                                            `Decompilation error. Try increasing the 
+                                            [cfrOutputSize](${cfrOutputSizeLink}) setting for this extension. 
+                                            ${error.message}`
+                                        );
+                                    }
+                                    else {
+                                        vscode.window.showErrorMessage('Decompilation error: ' + error.message);
+                                    }
+                                }
+
+                                if(stderr.length > 0) {
+                                    console.error(`CFR stderr: ${stderr}`);
+                                }
+                                
+                                // hide progress bar
+                                resolve();
+
+                                // display file if CFR process was not cancelled by user
+                                if(!token.isCancellationRequested) {
+                                    // set file contents to output of cfr
+                                    fileContents = stdout;
+                            
+                                    // show contents of file in editor viewer
+                                    documentProvider.updateContent(uri);
+                                }
+                            });
+
+                            // handle cancellation of CFR process by user
+                            token.onCancellationRequested(() => {
+                                cfrProcess.kill(); 
+                                resolve();
+                            });
+                        });
                     }
-
-                    if(stderr.length > 0) {
-                        console.error(`CFR error: ${stderr}`);
-                    }
-
-                    // set file contents to output of cfr
-                    fileContents = stdout;
-            
-                    // show contents of file in editor viewer
-                    const doc = await vscode.workspace.openTextDocument(uri); 
-                    
-                    // set syntax highlighting
-                    await vscode.languages.setTextDocumentLanguage(doc, 'java');
-
-                    await vscode.window.showTextDocument(doc, { preview: true });
-                });
+                );
             }
             else {
                 // read contents of selected file
@@ -699,7 +758,7 @@ class GraphNode {
 }
 
 /**
- * This class is used when vscode.workspace.openTextDocument(uri) is called
+ * This class is used when vscode.workspace.ouripenTextDocument(uri) is called
  * to open a selected file from the jar file. 
  */
 class TextDocumentContentProvider implements vscode.TextDocumentContentProvider {
@@ -709,5 +768,10 @@ class TextDocumentContentProvider implements vscode.TextDocumentContentProvider 
     provideTextDocumentContent(uri: vscode.Uri): string {
         // return most recent file that was read 
         return fileContents;
+    }
+
+    // Method to notify listeners of content change
+    updateContent(uri: vscode.Uri) {
+        this.onDidChangeEmitter.fire(uri);
     }
 }

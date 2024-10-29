@@ -2,7 +2,7 @@
   "name": "jar-viewer-and-decompiler",
   "displayName": "JAR Viewer and Decompiler",
   "description": "Browse and display decompiled contents of Java JAR files.",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "repository": {
     "type": "git",
     "url": "git@github.com:recursean/JAR-Viewer-and-Decompiler-VSCode-Extension.git"
@@ -95,6 +95,13 @@
           "type": "string",
           "default": "/path/to/cfr.jar",
           "description": "Path to the CFR decompiler JAR file."
+        },
+        "jar-viewer-and-decompiler.cfrOutputSize": {
+          "type": "number",
+          "default": 250,
+          "minimum": 1,
+          "maximum": 1048576,
+          "description": "CFR decompiler maximum output buffer size. Specified in kilobytes (KB)."
         }
       }
     },
