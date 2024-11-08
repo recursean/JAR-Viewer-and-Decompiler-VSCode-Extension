@@ -1,9 +1,5 @@
 # Change Log
 
-All notable changes to the "jar-viewer-and-decompiler" extension will be documented in this file.
-
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
-
 ## [1.2.2] - 2024-11-08
 
 ### Fixed
