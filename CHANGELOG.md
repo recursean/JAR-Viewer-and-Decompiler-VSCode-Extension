@@ -1,8 +1,9 @@
 # Change Log
 
-All notable changes to the "jar-viewer-and-decompiler" extension will be documented in this file.
+## [1.2.2] - 2024-11-08
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
+### Fixed
+- Decompiling class files fail when there is a space in file path
 
 ## [1.2.1] - 2024-10-28
 

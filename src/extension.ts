@@ -133,7 +133,7 @@ async function openFile(filePath: string, jarFile: JSZip, jarFileName: string, j
                 const editor = await vscode.window.showTextDocument(doc, { preview: true });
 
                 // CFR command to decompile selected class file
-                const command = `java -jar ${cfrPath} --extraclasspath ${jarFilePath} ${filePath}`;        
+                const command = `java -jar ${cfrPath} --extraclasspath "${jarFilePath}" ${filePath}`;        
                 
                 // display progress message while CFR is running
                 await vscode.window.withProgress(

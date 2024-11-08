@@ -26,28 +26,3 @@ This extension contributes the following settings:
 ## Known Issues
 
 * JAR files within JAR files can not be viewed.
-
-## Release Notes
-
-### 1.2.1
-
-New extension setting "cfrOutputSize" to solve error when decompiling large .class files.
-
-### 1.2.0
-
-Search for Java packages in JAR.
-
-### 1.1.0
-
-Print type signatures for class files in JAR.
-
-### 1.0.1
-
-Minor bug fixes.
-
-### 1.0.0
-
-Initial release of extension.
-
-
----
