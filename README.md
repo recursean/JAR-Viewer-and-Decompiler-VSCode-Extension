@@ -29,6 +29,10 @@ This extension contributes the following settings:
 
 ## Release Notes
 
+### 1.2.2
+
+Fixed error decompiling class files when space in file path.
+
 ### 1.2.1
 
 New extension setting "cfrOutputSize" to solve error when decompiling large .class files.
