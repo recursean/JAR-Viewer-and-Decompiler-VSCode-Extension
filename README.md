@@ -2,7 +2,7 @@
 
 ## Features
 
-This extension allows you to browse the contents of Java JAR files within Visual Studio Code. To launch this extension, right click on a .jar file in the VSCode explorer and select "Open With JAR Viewer and Decompiler".
+This extension allows you to browse the contents of Java JAR files within Visual Studio Code. To launch this extension, right click on a .jar file in the VSCode explorer or editor and select "Open With JAR Viewer and Decompiler".
 
 Java class files in the JARs can be decompiled. Decompiling class files requires CFR to be available. Do NOT use this extension to decompile class files which you do not have legal rights to do so.
 
