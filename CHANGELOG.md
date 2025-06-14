@@ -1,5 +1,11 @@
 # Change Log
 
+## [1.3.0] - 2025-05-31
+
+### Added
+- JAR files in open vscode editors can now be opened in extension by right clicking 
+  on the editor title tab for .jar file 
+
 ## [1.2.2] - 2024-11-08
 
 ### Fixed
