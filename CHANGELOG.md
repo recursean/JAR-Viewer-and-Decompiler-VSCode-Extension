@@ -1,5 +1,10 @@
 # Change Log
 
+## [1.4.0] - 2025-06-28
+
+### Added
+- Support for .zip, .war, and .ear files 
+
 ## [1.3.0] - 2025-05-31
 
 ### Added
