@@ -24,6 +24,9 @@ var searchView: JarFilterProvider;
 // used to handle opening of files in JAR 
 var documentProvider: TextDocumentContentProvider;
 
+// vscode extension context for storing workspace variables
+var extensionContext: vscode.ExtensionContext;
+
 var debug = false;
 
 /**
@@ -38,6 +41,9 @@ var debug = false;
  * @param context 
  */
 export function activate(context: vscode.ExtensionContext) {
+    // store context for later usage
+    extensionContext = context;
+
     // The command has been defined in the package.json file
     // Now provide the implementation of the command with registerCommand
     // The commandId parameter must match the command field in package.json
@@ -47,6 +53,7 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(vscode.commands.registerCommand('jar-viewer-and-decompiler.search', search));
     context.subscriptions.push(vscode.commands.registerCommand('jar-viewer-and-decompiler.searchRegex', searchRegex));
     context.subscriptions.push(vscode.commands.registerCommand('jar-viewer-and-decompiler.reset', reset));
+    context.subscriptions.push(vscode.commands.registerCommand('jar-viewer-and-decompiler.changeSearchMode', changeSearchMode));
 
     vscode.window.createTreeView('jarContents', {
         treeDataProvider: new JarContentProvider(undefined),
@@ -300,6 +307,41 @@ async function reset() {
     }
     
     searchView.reset();
+}
+
+/**
+ * Displays drop down list to choose search mode (package or class)
+ */
+async function changeSearchMode() {
+    // return early if no jar file has been selected
+    if(!searchView) {
+        return;
+    }
+
+    // search options for user to choose from
+    const searchOptions: vscode.QuickPickItem[] = [
+        {
+            label: 'Packages',
+            detail: 'Filter by Java packages and expand them as needed'
+        },
+        {
+            label: 'Classes',
+            detail: 'Filter by Java class names'
+        }
+    ];
+
+    // display quick pick list
+    const selected = await vscode.window.showQuickPick(searchOptions, {
+        placeHolder: "Select search mode"
+    });
+
+    if (selected) {
+        // store selection in workspace
+        extensionContext.workspaceState.update('jar-viewer-and-decompiler.searchMode', selected.label);
+
+        vscode.window.showInformationMessage(`Search mode set to ${selected.label}`);
+        searchView.reset();
+    }    
 }
 
 /**

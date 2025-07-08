@@ -35,24 +35,32 @@
             "command": "jar-viewer-and-decompiler.search",
             "title": "Search for packages in JAR",
             "icon": {
-                "dark": "media/search-white.svg",
-                "light": "media/search-black.svg"
+                "dark": "media/search-dark.svg",
+                "light": "media/search-light.svg"
             }
         },
         {
             "command": "jar-viewer-and-decompiler.searchRegex",
             "title": "Search regular expression for packages in JAR",
             "icon": {
-                "dark": "media/regex-white.svg",
-                "light": "media/regex-black.svg"
+                "dark": "media/regex-dark.svg",
+                "light": "media/regex-light.svg"
             }
         },
         {
             "command": "jar-viewer-and-decompiler.reset",
             "title": "Search reset",
             "icon": {
-                "dark": "media/reset-white.svg",
-                "light": "media/reset-black.svg"
+                "dark": "media/reset-dark.svg",
+                "light": "media/reset-light.svg"
+            }
+        },
+        {
+            "command": "jar-viewer-and-decompiler.changeSearchMode",
+            "title": "Search settings",
+            "icon": {
+                "dark": "media/gear-dark.svg",
+                "light": "media/gear-light.svg"
             }
         }
     ],
@@ -91,6 +99,11 @@
         },
         {   
             "command": "jar-viewer-and-decompiler.reset",
+            "when": "view == jarSearch",
+            "group": "navigation"
+        },
+        {   
+            "command": "jar-viewer-and-decompiler.changeSearchMode",
             "when": "view == jarSearch",
             "group": "navigation"
         }
