@@ -318,14 +318,19 @@ async function changeSearchMode() {
         return;
     }
 
+    // get current search mode to display which is currently selected
+    const searchMode = extensionContext.workspaceState.get<string>('jar-viewer-and-decompiler.searchMode') ?? 'Packages';
+
     // search options for user to choose from
     const searchOptions: vscode.QuickPickItem[] = [
         {
             label: 'Packages',
+            description: searchMode === 'Packages' ? 'current' : '',
             detail: 'Filter by Java packages and expand them as needed'
         },
         {
             label: 'Classes',
+            description: searchMode === 'Classes' ? 'current' : '',
             detail: 'Filter by Java class names'
         }
     ];
@@ -655,8 +660,15 @@ class JarFilterProvider implements vscode.TreeDataProvider<JarEntry> {
             return Promise.resolve(this.jarContentProvider!.getEntries(element, true));
         } 
         else {
-            // If no element is provided, return the root level entrie
-            return Promise.resolve(this.jarContentProvider!.getRootPackageEntries());
+            // if no element is provided, return the root level entry
+            const searchMode = extensionContext.workspaceState.get<string>('jar-viewer-and-decompiler.searchMode') ?? 'Packages';
+            if (searchMode === 'Packages') {
+                return Promise.resolve(this.jarContentProvider!.getRootPackageEntries());
+            }
+            else {
+                // replace with class logic
+                return Promise.resolve([]);
+            }
         }
     }
 
