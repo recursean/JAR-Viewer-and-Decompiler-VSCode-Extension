@@ -343,8 +343,6 @@ async function changeSearchMode() {
     if (selected) {
         // store selection in workspace
         extensionContext.workspaceState.update('jar-viewer-and-decompiler.searchMode', selected.label);
-
-        vscode.window.showInformationMessage(`Search mode set to ${selected.label}`);
         searchView.reset();
     }    
 }
@@ -531,6 +529,11 @@ class JarContentProvider implements vscode.TreeDataProvider<JarEntry> {
         return entries;
     }
     
+    /**
+     * Called by search view when configured to search packages
+     * 
+     * @returns List of root package entries
+     */
     getRootPackageEntries(): JarEntry[] {
         // entries that will be returned
         var entries: JarEntry[] = [];
@@ -547,15 +550,30 @@ class JarContentProvider implements vscode.TreeDataProvider<JarEntry> {
         return entries;
     }
     
+    /**
+     * Called by search view when configured to search classes
+     * 
+     * @returns List of class entries
+     */
     getRootClassEntries(): JarEntry[] {
         // entries that will be returned
         var entries: JarEntry[] = [];
+
+        // create local vars for sharing in arguments to openFile
+        var jarFilelocal = this.jarFile;
+        var jarFileNameLocal = this.jarFileName;
+        var jarFilePathLocal = this.jarFilePath;        
 
         this.classes.forEach(function (child) {
             const entry = new JarEntry(
                 child.package, 
                 child.filePath,
-                vscode.TreeItemCollapsibleState.None 
+                vscode.TreeItemCollapsibleState.None,
+                {
+                    command: 'jar-viewer-and-decompiler.openFile', 
+                    title: "Open File",
+                    arguments: [child.filePath, jarFilelocal, jarFileNameLocal, jarFilePathLocal] 
+                } 
             );
             entries.push(entry);
         });
