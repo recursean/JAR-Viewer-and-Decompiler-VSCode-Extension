@@ -370,11 +370,13 @@ class JarContentProvider implements vscode.TreeDataProvider<JarEntry> {
     jarMap: Map<string, GraphNode>;
 
     packages: GraphNode[];
+    classes: GraphNode[];
 
     constructor(private uri: vscode.Uri | undefined) {
         // init
         this.jarMap = new Map<string, GraphNode>();
         this.packages = [];
+        this.classes = [];
         this.jarFileName = "";
         this.jarFilePath = "";
 
@@ -544,6 +546,22 @@ class JarContentProvider implements vscode.TreeDataProvider<JarEntry> {
 
         return entries;
     }
+    
+    getRootClassEntries(): JarEntry[] {
+        // entries that will be returned
+        var entries: JarEntry[] = [];
+
+        this.classes.forEach(function (child) {
+            const entry = new JarEntry(
+                child.package, 
+                child.filePath,
+                vscode.TreeItemCollapsibleState.None 
+            );
+            entries.push(entry);
+        });
+
+        return entries;
+    }
 
     refresh(): void {
         this._onDidChangeTreeData.fire(null);
@@ -600,10 +618,15 @@ class JarContentProvider implements vscode.TreeDataProvider<JarEntry> {
                     if(parentNode) {
                         parentNode.children.push(n);
 
-                        // if class file, mark parent node as Java package
-                        if(n.isClassFile && !parentNode.isPackage) {
-                            parentNode.setPackage(true);
-                            this.packages.push(parentNode);
+                        // process class files
+                        if(n.isClassFile) {
+                            this.classes.push(n);
+
+                            // mark parent node as Java package
+                            if(!parentNode.isPackage) {
+                                parentNode.setPackage(true);
+                                this.packages.push(parentNode);
+                            }
                         }
                     }
                 }
@@ -667,7 +690,7 @@ class JarFilterProvider implements vscode.TreeDataProvider<JarEntry> {
             }
             else {
                 // replace with class logic
-                return Promise.resolve([]);
+                return Promise.resolve(this.jarContentProvider!.getRootClassEntries());
             }
         }
     }
@@ -785,7 +808,7 @@ class GraphNode {
             var nameParts = this.fileName.split(".");
             if(nameParts[nameParts.length - 1] === 'class') {
                 this.isClassFile = true;
-                this.package = this.filePath.replaceAll("/",".").substring(0, this.filePath.length-1);
+                this.package = this.filePath.replaceAll("/",".").substring(0, this.filePath.length);
             }
         }
 
@@ -803,7 +826,11 @@ class GraphNode {
     setPackage(isPackage: boolean) {
         this.isPackage = isPackage;
         if(isPackage) {
-            this.package = this.filePath.replaceAll("/",".").substring(0, this.filePath.length-1);
+            this.package = this.filePath.replaceAll("/",".").substring(0, this.filePath.length);
+            // ensure no trailing delimiter
+            if (this.package.endsWith('.')) {
+                this.package = this.package.slice(0, -1);
+            }            
         }
         else {
             this.package = "";
