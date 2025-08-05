@@ -268,9 +268,13 @@ async function search() {
         return;
     }
 
+    // get current search mode to display which is currently selected
+    const searchMode = extensionContext.workspaceState.get<string>('jar-viewer-and-decompiler.searchMode') ?? 'Packages';
+    const isPackagesCurrent = searchMode === 'Packages' ? true : false;    
+
     const searchQuery = await vscode.window.showInputBox({
-        prompt: "Enter fully qualified package",
-        placeHolder: "Search for Java package"
+        prompt: `Enter fully qualified ${isPackagesCurrent ? "package" : "class"}`,
+        placeHolder: `Search for Java ${isPackagesCurrent ? "packages" : "classes"}`
     });
 
     if(searchQuery) {
@@ -287,9 +291,13 @@ async function searchRegex() {
         return;
     }
 
+    // get current search mode to display which is currently selected
+    const searchMode = extensionContext.workspaceState.get<string>('jar-viewer-and-decompiler.searchMode') ?? 'Packages';
+    const isPackagesCurrent = searchMode === 'Packages' ? true : false;    
+
     const searchQuery = await vscode.window.showInputBox({
-        prompt: "Enter package regular expression",
-        placeHolder: "Search for Java package"
+        prompt: `Enter ${isPackagesCurrent ? "package" : "class"} regular expression`,
+        placeHolder: `Search for Java ${isPackagesCurrent ? "packages" : "classes"}`
     });
 
     if(searchQuery) {
@@ -318,7 +326,7 @@ async function changeSearchMode() {
         return;
     }
 
-    // get current search mode to display which is currently selected
+    // get current search mode to determine which is currently selected
     const searchMode = extensionContext.workspaceState.get<string>('jar-viewer-and-decompiler.searchMode') ?? 'Packages';
     const isPackagesCurrent = searchMode === 'Packages' ? true : false;
 
