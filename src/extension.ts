@@ -668,6 +668,9 @@ class JarContentProvider implements vscode.TreeDataProvider<JarEntry> {
             this.packages.sort((a: GraphNode, b: GraphNode) => {
                 return a.filePath.localeCompare(b.filePath);
             });
+            this.classes.sort((a: GraphNode, b: GraphNode) => {
+                return a.filePath.localeCompare(b.filePath);
+            });
         } catch (error) {
             console.error(`Failed to parse JAR file: ${error}`);
             vscode.window.showErrorMessage(`Failed to parse JAR file: ${error}`);
