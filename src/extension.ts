@@ -274,7 +274,7 @@ async function search() {
     });
 
     if(searchQuery) {
-        searchView.filterPackages(searchQuery, false);
+        searchView.filterContent(searchQuery, false);
     }
 }
 
@@ -293,7 +293,7 @@ async function searchRegex() {
     });
 
     if(searchQuery) {
-        searchView.filterPackages(searchQuery, true);
+        searchView.filterContent(searchQuery, true);
     }
 }
 
@@ -320,19 +320,20 @@ async function changeSearchMode() {
 
     // get current search mode to display which is currently selected
     const searchMode = extensionContext.workspaceState.get<string>('jar-viewer-and-decompiler.searchMode') ?? 'Packages';
+    const isPackagesCurrent = searchMode === 'Packages' ? true : false;
 
     // search options for user to choose from
     const searchOptions: vscode.QuickPickItem[] = [
         {
-            label: 'Packages',
-            description: searchMode === 'Packages' ? 'current' : '',
-            detail: 'Filter by Java packages and expand them as needed'
+            label: isPackagesCurrent ? 'Packages' : 'Classes',
+            description: 'current',
+            detail: 'Filter by Java ' + ( isPackagesCurrent ? 'packages' : 'classes' )
         },
         {
-            label: 'Classes',
-            description: searchMode === 'Classes' ? 'current' : '',
-            detail: 'Filter by Java class names'
-        }
+            label: !isPackagesCurrent ? 'Packages' : 'Classes',
+            description: '',
+            detail: 'Filter by Java ' + ( !isPackagesCurrent ? 'packages' : 'classes' )
+        },
     ];
 
     // display quick pick list
@@ -672,15 +673,18 @@ class JarFilterProvider implements vscode.TreeDataProvider<JarEntry> {
 
     // unfiltered list of packages
     packages: GraphNode[];
+    classes: GraphNode[];
 
     constructor(private jarContentProvider: JarContentProvider | undefined) {
         if(!jarContentProvider) {
             this.packages = [];
+            this.classes = [];
             return;
         }
 
-        // store unfiltered list of packages
+        // store unfiltered list of packages and classes
         this.packages = this.jarContentProvider!.packages;
+        this.classes = this.jarContentProvider!.classes;
     }
 
     refresh(): void {
@@ -707,7 +711,6 @@ class JarFilterProvider implements vscode.TreeDataProvider<JarEntry> {
                 return Promise.resolve(this.jarContentProvider!.getRootPackageEntries());
             }
             else {
-                // replace with class logic
                 return Promise.resolve(this.jarContentProvider!.getRootClassEntries());
             }
         }
@@ -717,26 +720,51 @@ class JarFilterProvider implements vscode.TreeDataProvider<JarEntry> {
      * Filters view to only displays classes and packages that match the search
      * query.
      * 
+     * This method queries the searchMode setting provided by this extension to
+     * determine if packages or classes are being searched.
+     * 
      * @param searchQuery Fully qualified class file to search
      * @param isRegex true if searchQuery is a regular expression
      */
-    filterPackages(searchQuery: string, isRegex: boolean) {
+    filterContent(searchQuery: string, isRegex: boolean) {
+        // determine current search mode
+        const searchMode = extensionContext.workspaceState.get<string>('jar-viewer-and-decompiler.searchMode') ?? 'Packages';
+
         // normal substring search
         if(!isRegex) {
-            this.jarContentProvider!.packages = this.packages.filter(entry => entry.package.includes(searchQuery));
+            if (searchMode === 'Packages') {
+                this.jarContentProvider!.packages = this.packages.filter(entry => entry.package.includes(searchQuery));
+            }
+            else {                
+                this.jarContentProvider!.classes = this.classes.filter(entry => entry.package.includes(searchQuery));
+            }
         }
         // regular expression search
         else {
-            this.jarContentProvider!.packages = this.packages.filter(entry => {
-                try {
-                    const regex = new RegExp(searchQuery); 
-                    return regex.test(entry.package); 
-                }
-                catch (error) {
-                    console.error("Invalid search regular expression:", error);
-                    return [];
-                }
-            });
+            if (searchMode === 'Packages') {
+                this.jarContentProvider!.packages = this.packages.filter(entry => {
+                    try {
+                        const regex = new RegExp(searchQuery); 
+                        return regex.test(entry.package); 
+                    }
+                    catch (error) {
+                        console.error("Invalid search regular expression:", error);
+                        return [];
+                    }
+                });
+            }
+            else {
+                this.jarContentProvider!.classes = this.classes.filter(entry => {
+                    try {
+                        const regex = new RegExp(searchQuery); 
+                        return regex.test(entry.package); 
+                    }
+                    catch (error) {
+                        console.error("Invalid search regular expression:", error);
+                        return [];
+                    }
+                });
+            }
         }
 
         this.refresh();
@@ -748,6 +776,7 @@ class JarFilterProvider implements vscode.TreeDataProvider<JarEntry> {
     reset() {
         if(this.jarContentProvider) {
             this.jarContentProvider.packages = this.packages;
+            this.jarContentProvider.classes  = this.classes;
         }
         this.refresh();
     }
