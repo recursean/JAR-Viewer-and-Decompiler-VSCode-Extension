@@ -1,4 +1,4 @@
-# jar-viewer-and-decompiler
+# JAR Viewer and Decompiler
 
 ## Features
 

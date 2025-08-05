@@ -1,5 +1,10 @@
 # Change Log
 
+## [1.5.0] - 2025-08-04
+
+### Added
+- Search and filter for Java class files in JAR
+
 ## [1.4.0] - 2025-06-28
 
 ### Added
