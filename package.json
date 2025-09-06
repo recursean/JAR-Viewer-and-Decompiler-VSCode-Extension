@@ -111,6 +111,11 @@
     },
     "configuration": {
       "properties": {
+        "jar-viewer-and-decompiler.javaPath": {
+          "type": "string",
+          "default": "java",
+          "description": "Path to the java executable file."
+        },
         "jar-viewer-and-decompiler.cfrPath": {
           "type": "string",
           "default": "/path/to/cfr.jar",

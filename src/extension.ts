@@ -124,6 +124,11 @@ async function openFile(filePath: string, jarFile: JSZip, jarFileName: string, j
             var parts = filePath.split(".");
             // was a java class file selected?
             if(parts[parts.length - 1] === 'class') {
+                // get java executable file path from extension settings
+                const javaPath = vscode.workspace.getConfiguration().get<string>(
+                    'jar-viewer-and-decompiler.javaPath'
+                );
+
                 // get path to CFR JAR file from extension settings
                 const cfrPath = vscode.workspace.getConfiguration().get<string>(
                     'jar-viewer-and-decompiler.cfrPath'
@@ -140,7 +145,7 @@ async function openFile(filePath: string, jarFile: JSZip, jarFileName: string, j
                 const editor = await vscode.window.showTextDocument(doc, { preview: true });
 
                 // CFR command to decompile selected class file
-                const command = `java -jar ${cfrPath} --extraclasspath "${jarFilePath}" ${filePath}`;        
+                const command = `${javaPath} -jar ${cfrPath} --extraclasspath "${jarFilePath}" ${filePath}`;        
                 
                 // display progress message while CFR is running
                 await vscode.window.withProgress(
