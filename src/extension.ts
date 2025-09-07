@@ -124,20 +124,20 @@ async function openFile(filePath: string, jarFile: JSZip, jarFileName: string, j
             var parts = filePath.split(".");
             // was a java class file selected?
             if(parts[parts.length - 1] === 'class') {
-                // get java executable file path from extension settings
-                const javaPath = vscode.workspace.getConfiguration().get<string>(
-                    'jar-viewer-and-decompiler.javaPath'
-                );
+                // get specified size for CFR output from extension settings
+                const cfrOutputSize = vscode.workspace.getConfiguration().get<number>(
+                    'jar-viewer-and-decompiler.cfrOutputSize') ?? CFR_OUTPUT_SIZE_DEFAULT;
 
                 // get path to CFR JAR file from extension settings
                 const cfrPath = vscode.workspace.getConfiguration().get<string>(
                     'jar-viewer-and-decompiler.cfrPath'
                 );
-                
-                // get specified size for CFR output from extension settings
-                const cfrOutputSize = vscode.workspace.getConfiguration().get<number>(
-                    'jar-viewer-and-decompiler.cfrOutputSize') ?? CFR_OUTPUT_SIZE_DEFAULT;
 
+                // get java executable file path from extension settings
+                const javaPath = vscode.workspace.getConfiguration().get<string>(
+                    'jar-viewer-and-decompiler.javaPath'
+                );
+                                    
                 // open empty document as placeholder until CFR returns
                 fileContents = '';
                 const doc = await vscode.workspace.openTextDocument(uri);                     
