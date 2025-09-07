@@ -21,9 +21,9 @@ Additional Features
 ## Extension Settings
 This extension contributes the following settings:
 
-* `jar-viewer-and-decompiler.javaPath`: Path to the java executable file. Default: java, meaning that java executable file is taken from path.
 * `jar-viewer-and-decompiler.cfrPath`: Path to the CFR decompiler JAR file. This is required for decompiling class files.
 * `jar-viewer-and-decompiler.cfrOutputSize`: CFR decompiler maximum output buffer size. Specified in kilobytes (KB). Default: 250
+* `jar-viewer-and-decompiler.javaPath`: Path to the java executable file. Default: java (uses the java executable available in the system PATH)
 
 ## Known Issues
 
